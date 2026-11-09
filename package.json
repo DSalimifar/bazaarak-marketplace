@@ -1,0 +1,15 @@
+{
+  "name": "bazaarak",
+  "version": "0.1.0",
+  "description": "بازارچه مستقل — نسخه آغازین",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "marketplace",
+    "cloudflare-worker"
+  ],
+  "author": "",
+  "license": "ISC"
+}

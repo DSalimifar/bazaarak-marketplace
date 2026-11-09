@@ -92,7 +92,7 @@ CREATE TABLE order_items (
 CREATE TABLE payment_receipts (
   id TEXT PRIMARY KEY,
   order_id TEXT NOT NULL UNIQUE,
-  r2_object_key TEXT NOT NULL,
+  storage_object_path TEXT NOT NULL,
   submitted_by TEXT NOT NULL,
   verification_status TEXT NOT NULL DEFAULT 'pending'
     CHECK (verification_status IN ('pending','confirmed','rejected')),

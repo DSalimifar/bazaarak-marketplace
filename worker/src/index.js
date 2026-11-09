@@ -1,12 +1,29 @@
 // API scaffold only. Do not deploy as a production marketplace yet.
-const json = (data, status = 200) =>
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
+};
+
+export const json = (data, status = 200, customHeaders = {}) =>
   new Response(JSON.stringify(data), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8" }
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      ...corsHeaders,
+      ...customHeaders
+    }
   });
 
 export default {
   async fetch(request, env) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders
+      });
+    }
+
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/api/health") {
