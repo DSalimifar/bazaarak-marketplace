@@ -1,1 +1,17 @@
+name = "marketplace-api"
+main = "src/index.js"
+compatibility_date = "2026-11-09"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "marketplace-db"
+database_id = "REPLACE_WITH_DATABASE_ID"
+
+[vars]
+SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co"
+SUPABASE_PRODUCT_BUCKET = "product-images"
+SUPABASE_RECEIPT_BUCKET = "payment-receipts"
+
+# Set secrets separately:
+# npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+# npx wrangler secret put SESSION_SECRET
