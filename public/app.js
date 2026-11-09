@@ -35,8 +35,20 @@ $("#productGrid").addEventListener("click",e=>{
 });
 $("#productForm").addEventListener("submit",e=>{
  e.preventDefault();const d=new FormData(e.target);
- const p={id:Date.now(),title:d.get("title"),price:Number(d.get("price")),city:d.get("city"),category:d.get("category"),seller:d.get("seller"),description:d.get("description"),emoji:"📦"};
- products.push(p);const custom=products.filter(x=>x.id>1000000000000);localStorage.setItem(key,JSON.stringify(custom));initFilters();render();e.target.reset();$("#productDialog").close();
+ const title=String(d.get("title")||"").trim();
+ const city=String(d.get("city")||"").trim();
+ const seller=String(d.get("seller")||"").trim();
+ const category=String(d.get("category")||"خوراکی").trim();
+ const description=String(d.get("description")||"").trim();
+ const price=Math.round(Number(d.get("price")));
+ if(!title||!city||!seller||price<=0||Number.isNaN(price)){
+  alert("لطفاً تمام اطلاعات محصول را به درستی وارد کنید (قیمت باید بزرگتر از صفر باشد).");
+  return;
+ }
+ const p={id:Date.now(),title,price,city,category,seller,description,emoji:"📦"};
+ products.push(p);const demoIds=new Set(demoProducts.map(d=>d.id));
+ const custom=products.filter(x=>!demoIds.has(x.id));
+ localStorage.setItem(key,JSON.stringify(custom));initFilters();render();e.target.reset();$("#productDialog").close();
 });
 $("#orderForm").addEventListener("submit",e=>{
  e.preventDefault();alert("درخواست خرید به‌صورت نمایشی ثبت شد. در نسخه عملیاتی، این درخواست به فروشنده ارسال می‌شود. هیچ پولی واریز نکنید.");
