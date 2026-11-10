@@ -28,7 +28,12 @@ export default {
       }
     }
 
-    // Business endpoints remain disabled until authentication and authorization exist.
-    return json({ error: "API route not implemented", path: url.pathname }, 501);
+    if (url.pathname.startsWith("/api/")) {
+      return json({ error: "API route not implemented", path: url.pathname }, 501);
+    }
+
+    // run_worker_first=true sends requests here before Static Assets.
+    if (env.ASSETS) return env.ASSETS.fetch(request);
+    return new Response("Not Found", { status: 404 });
   }
 };
