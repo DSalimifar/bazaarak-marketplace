@@ -32,6 +32,22 @@ test("OPTIONS returns CORS headers", async () => {
   assert.equal(res.headers.get("access-control-allow-origin"), "*");
 });
 
+test("non-API requests are served by Static Assets", async () => {
+  const request = new Request("https://example.com/");
+  const ASSETS = { fetch: async received => {
+    assert.equal(received.url, request.url);
+    return new Response("marketplace home", { status: 200 });
+  }};
+  const res = await worker.fetch(request, { ASSETS });
+  assert.equal(res.status, 200);
+  assert.equal(await res.text(), "marketplace home");
+});
+
+test("non-API requests return 404 without Static Assets binding", async () => {
+  const res = await worker.fetch(new Request("https://example.com/"), {});
+  assert.equal(res.status, 404);
+});
+
 test("unimplemented API remains disabled", async () => {
   const res = await worker.fetch(new Request("http://localhost/api/orders"), {});
   assert.equal(res.status, 501);
