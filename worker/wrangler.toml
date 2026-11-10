@@ -1,0 +1,21 @@
+name = "bazaarak-marketplace"
+main = "src/index.js"
+compatibility_date = "2026-11-10"
+
+[assets]
+directory = "../public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "marketplace-db"
+database_id = "de039690-5146-4afe-879d-263215dda35e"
+migrations_dir = "../migrations"
+
+[vars]
+SUPABASE_URL = "https://kzectbmyyychvoeffibh.supabase.co"
+SUPABASE_PRODUCT_BUCKET = "product-images"
+SUPABASE_RECEIPT_BUCKET = "payment-receipts"
+
+# Secrets must be set separately with `npx wrangler secret put`.
