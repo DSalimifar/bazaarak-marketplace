@@ -38,7 +38,7 @@ jobs:
 
       - name: Apply pending remote migrations
         if: ${{ inputs.apply_migrations }}
-        run: npx --yes wrangler@4 d1 migrations apply marketplace-db --remote --config worker/wrangler.toml --yes
+        run: npx --yes wrangler@4 d1 migrations apply marketplace-db --remote --config worker/wrangler.toml
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
