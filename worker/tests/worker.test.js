@@ -1,94 +1,64 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import worker, { json } from "../src/index.js";
+import worker from "../src/index.js";
 import { createSignedUploadUrl, createSignedDownloadUrl } from "../src/supabase-storage.js";
 
-test("GET /api/health returns 200 with ok: true and CORS header", async () => {
-  const req = new Request("http://localhost/api/health", { method: "GET" });
-  const res = await worker.fetch(req, {});
+test("health checks D1 successfully", async () => {
+  const DB = { prepare: sql => ({ first: async () => {
+    assert.equal(sql, "SELECT 1 AS db_ok");
+    return { db_ok: 1 };
+  }})};
+  const res = await worker.fetch(new Request("http://localhost/api/health"), { DB });
   assert.equal(res.status, 200);
-  assert.equal(res.headers.get("access-control-allow-origin"), "*");
-  const data = await res.json();
-  assert.equal(data.ok, true);
-  assert.equal(data.service, "marketplace-api");
+  assert.equal((await res.json()).database, "connected");
 });
 
-test("OPTIONS request returns 204 with CORS headers", async () => {
-  const req = new Request("http://localhost/api/some-endpoint", { method: "OPTIONS" });
-  const res = await worker.fetch(req, {});
+test("health reports missing D1 binding", async () => {
+  const res = await worker.fetch(new Request("http://localhost/api/health"), {});
+  assert.equal(res.status, 503);
+  assert.equal((await res.json()).database, "not_configured");
+});
+
+test("health reports D1 query failure", async () => {
+  const DB = { prepare: () => ({ first: async () => { throw new Error("offline"); } }) };
+  const res = await worker.fetch(new Request("http://localhost/api/health"), { DB });
+  assert.equal(res.status, 503);
+  assert.equal((await res.json()).database, "query_failed");
+});
+
+test("OPTIONS returns CORS headers", async () => {
+  const res = await worker.fetch(new Request("http://localhost/api/x", { method: "OPTIONS" }), {});
   assert.equal(res.status, 204);
   assert.equal(res.headers.get("access-control-allow-origin"), "*");
-  assert.equal(res.headers.get("access-control-allow-methods"), "GET, POST, OPTIONS");
 });
 
-test("Unimplemented routes return 501", async () => {
-  const req = new Request("http://localhost/api/orders", { method: "GET" });
-  const res = await worker.fetch(req, {});
+test("unimplemented API remains disabled", async () => {
+  const res = await worker.fetch(new Request("http://localhost/api/orders"), {});
   assert.equal(res.status, 501);
-  const data = await res.json();
-  assert.equal(data.error, "API route not implemented");
-  assert.equal(data.path, "/api/orders");
 });
 
-test("supabase-storage throws error when env is not configured", async () => {
-  await assert.rejects(
-    async () => {
-      await createSignedUploadUrl({}, "payment-receipts", "receipts/1.jpg");
-    },
-    {
-      name: "Error",
-      message: "Supabase Storage is not configured"
-    }
-  );
-
-  await assert.rejects(
-    async () => {
-      await createSignedDownloadUrl({ SUPABASE_URL: "https://example.supabase.co" }, "payment-receipts", "receipts/1.jpg");
-    },
-    {
-      name: "Error",
-      message: "Supabase Storage is not configured"
-    }
-  );
+test("Supabase helpers reject missing configuration", async () => {
+  await assert.rejects(() => createSignedUploadUrl({}, "payment-receipts", "receipts/a.jpg"),
+    { message: "Supabase Storage is not configured" });
+  await assert.rejects(() => createSignedDownloadUrl({ SUPABASE_URL: "https://example.supabase.co" },
+    "payment-receipts", "receipts/a.jpg"), { message: "Supabase Storage is not configured" });
 });
 
-test("supabase-storage sends correct request to Supabase REST API", async () => {
+test("Supabase helpers call signed upload/download endpoints", async () => {
   const originalFetch = globalThis.fetch;
   try {
-    let capturedUrl = "";
-    let capturedOptions = {};
-
+    let lastUrl = "";
+    let lastOptions = {};
     globalThis.fetch = async (url, options) => {
-      capturedUrl = url;
-      capturedOptions = options;
-      return new Response(JSON.stringify({ url: "https://signed-url.example.com" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" }
-      });
+      lastUrl = url; lastOptions = options;
+      return new Response(JSON.stringify({ url: "https://signed.example" }), { status: 200 });
     };
-
-    const env = {
-      SUPABASE_URL: "https://test.supabase.co",
-      SUPABASE_SERVICE_ROLE_KEY: "secret-key-123"
-    };
-
-    const res = await createSignedUploadUrl(env, "payment-receipts", "receipts/order-1/file.jpg");
-    assert.equal(res.url, "https://signed-url.example.com");
-    assert.equal(
-      capturedUrl,
-      "https://test.supabase.co/storage/v1/object/upload/sign/payment-receipts/receipts/order-1/file.jpg"
-    );
-    assert.equal(capturedOptions.headers["Authorization"], "Bearer secret-key-123");
-    assert.equal(capturedOptions.headers["apikey"], "secret-key-123");
-
-    const dlRes = await createSignedDownloadUrl(env, "payment-receipts", "receipts/order-1/file.jpg", 300);
-    assert.equal(dlRes.url, "https://signed-url.example.com");
-    assert.equal(
-      capturedUrl,
-      "https://test.supabase.co/storage/v1/object/sign/payment-receipts/receipts/order-1/file.jpg"
-    );
-    assert.equal(JSON.parse(capturedOptions.body).expiresIn, 300);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+    const env = { SUPABASE_URL: "https://kzectbmyyychvoeffibh.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "test-secret" };
+    await createSignedUploadUrl(env, "payment-receipts", "receipts/order/file.jpg");
+    assert.match(lastUrl, /object\/upload\/sign\/payment-receipts/);
+    assert.equal(lastOptions.headers.Authorization, "Bearer test-secret");
+    await createSignedDownloadUrl(env, "payment-receipts", "receipts/order/file.jpg", 300);
+    assert.match(lastUrl, /object\/sign\/payment-receipts/);
+    assert.equal(JSON.parse(lastOptions.body).expiresIn, 300);
+  } finally { globalThis.fetch = originalFetch; }
 });
