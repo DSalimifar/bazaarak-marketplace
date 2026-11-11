@@ -33,8 +33,66 @@ test("OPTIONS returns CORS headers", async () => {
 });
 
 test("unimplemented API remains disabled", async () => {
-  const res = await worker.fetch(new Request("http://localhost/api/orders"), {});
+  const res = await worker.fetch(new Request("http://localhost/api/unknown-route"), {});
   assert.equal(res.status, 501);
+});
+
+test("GET /api/categories returns categories from D1", async () => {
+  const DB = {
+    prepare: sql => ({
+      all: async () => {
+        assert.match(sql, /FROM categories/);
+        return { results: [{ id: "cat_food", title: "خوراکی" }] };
+      }
+    })
+  };
+  const res = await worker.fetch(new Request("http://localhost/api/categories"), { DB });
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.categories.length, 1);
+  assert.equal(data.categories[0].title, "خوراکی");
+});
+
+test("GET /api/products returns active products from D1", async () => {
+  const DB = {
+    prepare: sql => ({
+      all: async () => {
+        assert.match(sql, /FROM products/);
+        return { results: [{ id: "prod_1", title: "عسل کوهستان", price_irr: 500000 }] };
+      }
+    })
+  };
+  const res = await worker.fetch(new Request("http://localhost/api/products"), { DB });
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.products.length, 1);
+  assert.equal(data.products[0].title, "عسل کوهستان");
+});
+
+test("GET /api/admin/overview rejects unauthenticated requests with 401", async () => {
+  const res = await worker.fetch(new Request("http://localhost/api/admin/overview"), {
+    ADMIN_API_KEY: "secret-token"
+  });
+  assert.equal(res.status, 401);
+  const data = await res.json();
+  assert.equal(data.error, "Unauthorized");
+});
+
+test("GET /api/admin/overview returns dashboard counts and admin users when authorized", async () => {
+  const DB = {
+    prepare: sql => ({
+      first: async () => ({ total: 10 }),
+      all: async () => ({ results: [{ id: "usr_admin", display_name: "مدیر", role: "admin" }] })
+    })
+  };
+  const req = new Request("http://localhost/api/admin/overview", {
+    headers: { Authorization: "Bearer secret-token" }
+  });
+  const res = await worker.fetch(req, { DB, ADMIN_API_KEY: "secret-token" });
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.overview.users_count, 10);
+  assert.equal(data.overview.admins[0].display_name, "مدیر");
 });
 
 test("Supabase helpers reject missing configuration", async () => {
