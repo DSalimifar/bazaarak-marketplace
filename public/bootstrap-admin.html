@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>ساخت مدیر اولیه بازارچه</title>
+<style>
+body{font-family:tahoma, sans-serif;background:#f3f4f6;padding:20px}
+main{max-width:480px;margin:30px auto;background:white;padding:22px;border-radius:14px}
+h2{font-size:20px}
+input,button{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;border:1px solid #ccc;border-radius:8px;font-size:15px}
+button{background:#155eef;color:white;border:0;font-weight:bold}
+#result{white-space:pre-wrap;overflow-wrap:anywhere;line-height:2}
+small{color:#666}
+</style>
+</head>
+<body>
+<main>
+<h2>ساخت مدیر اولیه بازارچه</h2>
+<p>اطلاعات را وارد کن. این فرم فقط یک بار برای ساخت مدیر اولیه استفاده می‌شود.</p>
+<form id="form">
+<label>Secret راه‌اندازی</label>
+<input id="secret" type="password" required autocomplete="off">
+<label>شماره موبایل</label>
+<input id="phone" required inputmode="tel" autocomplete="off" placeholder="0912xxxxxxx">
+<label>رمز مدیر (حداقل ۱۲ نویسه)</label>
+<input id="password" type="password" required minlength="12" maxlength="128" autocomplete="new-password">
+<label>نام مدیر</label>
+<input id="display_name" required maxlength="80">
+<label>کد شهر</label>
+<input id="city_code" required maxlength="20">
+<label>نام شهر</label>
+<input id="city_name" required maxlength="80">
+<button type="submit">ایجاد مدیر اولیه</button>
+</form>
+<p id="result"></p>
+<small>پس از ایجاد موفق مدیر، این صفحه باید از مخزن حذف شود.</small>
+</main>
+<script>
+const form=document.getElementById("form");
+const result=document.getElementById("result");
+
+form.addEventListener("submit",async function(e){
+ e.preventDefault();
+ const secret=document.getElementById("secret");
+ const password=document.getElementById("password");
+ const button=form.querySelector("button");
+ button.disabled=true;
+ result.textContent="در حال ارسال درخواست...";
+ try{
+  const response=await fetch("/api/admin/bootstrap",{
+   method:"POST",
+   credentials:"same-origin",
+   headers:{
+    "Content-Type":"application/json",
+    "Authorization":"Bearer "+secret.value
+   },
+   body:JSON.stringify({
+    phone:document.getElementById("phone").value,
+    password:password.value,
+    display_name:document.getElementById("display_name").value,
+    city_code:document.getElementById("city_code").value,
+    city_name:document.getElementById("city_name").value
+   })
+  });
+  const data=await response.json();
+  result.textContent="کد پاسخ: "+response.status+"\n"+JSON.stringify(data,null,2);
+  if(response.ok){
+   secret.value="";
+   password.value="";
+   form.reset();
+  }
+ }catch(err){
+  result.textContent="خطا در ارتباط با سرور: "+err.message;
+ }finally{
+  button.disabled=false;
+ }
+});
+</script>
+</body>
+</html>
