@@ -1,0 +1,6 @@
+--- a/public/index.html
++++ b/public/index.html
+@@
+-<script src="./app.js"></script>
++<script src="./app.js"></script>
++<script src="./auth-ui.js"></script>
