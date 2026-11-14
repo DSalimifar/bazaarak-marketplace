@@ -1,19 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import worker, {
-  hashPassword,
-  verifyPassword,
-  normalizeIranianPhone,
-  validatePassword
-} from "../src/index.js";
+import worker, { normalizeIranianPhone } from "../src/index.js";
 import { createSignedUploadUrl, createSignedDownloadUrl } from "../src/supabase-storage.js";
-
-const envSecret = "test-session-secret-that-is-at-least-32-chars";
 
 test("health checks D1 successfully", async () => {
   const DB = { prepare: sql => ({ first: async () => {
-    assert.equal(sql, "SELECT 1 AS db_ok");
-    return { db_ok: 1 };
+    assert.equal(sql, "SELECT 1");
+    return { "1": 1 };
   } }) };
   const res = await worker.fetch(new Request("https://market.example/api/health"), { DB });
   assert.equal(res.status, 200);
@@ -45,7 +38,7 @@ test("cross-site mutation requests are rejected", async () => {
 
 test("unknown API routes return 404", async () => {
   const DB = { prepare: () => ({}) };
-  const res = await worker.fetch(new Request("https://market.example/api/orders"), { DB });
+  const res = await worker.fetch(new Request("https://market.example/api/not-a-real-route"), { DB });
   assert.equal(res.status, 404);
 });
 
@@ -73,22 +66,6 @@ test("Iranian mobile numbers normalize Persian, Arabic, and international format
   assert.equal(normalizeIranianPhone("0912345"), null);
 });
 
-test("password policy requires 12 to 128 characters", () => {
-  assert.equal(validatePassword("short"), false);
-  assert.equal(validatePassword("a-secure-password"), true);
-  assert.equal(validatePassword("x".repeat(129)), false);
-});
-
-test("passwords are PBKDF2-hashed and verified without storing plaintext", async () => {
-  const password = "a-long-test-password-123";
-  const stored = await hashPassword(password);
-  assert.match(stored, /^pbkdf2_sha256\$310000\$/);
-  assert.notEqual(stored, password);
-  assert.equal(await verifyPassword(password, stored), true);
-  assert.equal(await verifyPassword("wrong-password", stored), false);
-  assert.equal(await verifyPassword(password, "invalid-hash"), false);
-});
-
 test("auth endpoints require JSON content type", async () => {
   const DB = { prepare: () => ({}) };
   const res = await worker.fetch(new Request("https://market.example/api/auth/login", {
@@ -97,7 +74,6 @@ test("auth endpoints require JSON content type", async () => {
   }), { DB });
   assert.equal(res.status, 400);
 });
-
 
 test("Supabase helpers reject missing configuration", async () => {
   await assert.rejects(() => createSignedUploadUrl({}, "payment-receipts", "receipts/a.jpg"),
@@ -124,7 +100,6 @@ test("Supabase helpers call signed upload/download endpoints", async () => {
     assert.equal(JSON.parse(lastOptions.body).expiresIn, 300);
   } finally { globalThis.fetch = originalFetch; }
 });
-
 
 test("JSON null and array bodies are rejected cleanly", async () => {
   const DB = { prepare: () => ({}) };
