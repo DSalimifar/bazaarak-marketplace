@@ -1,49 +1,15 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#173b35">
-<title>بازارچه | بازار اعضا</title>
-<link rel="stylesheet" href="./styles.css">
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#173b35"><title>بازارچه | بازار اعضا</title><link rel="stylesheet" href="./styles.css"></head>
 <body>
-<header class="topbar">
-  <a class="brand" href="#"><span class="brandmark">ب</span><span><b>بازارچه</b><small>بازار اعضا و دوستان</small></span></a>
-  <nav><a href="#products">محصولات</a><a href="#how">راهنمای خرید</a></nav>
-  <div class="top-actions"><button class="btn ghost" id="loginBtn">ورود اعضا</button><button class="btn primary" id="sellBtn">ثبت محصول +</button></div>
-</header>
-<main>
-<section class="hero">
-  <div class="hero-copy"><span class="eyebrow">بازار محلی، ارتباط مستقیم</span>
-    <h1>خوبی‌های هر شهر،<br><em>در دسترس همه</em></h1>
-    <p>محصولات اعضا و افراد دعوت‌شده را از شهرهای مختلف ببینید، مستقیم از فروشنده بخرید و حضوری تحویل بگیرید.</p>
-    <a class="btn light" href="#products">دیدن محصولات <span>←</span></a>
-  </div>
-  <div class="hero-art"><div class="sun"></div><div class="art-card"><span>محصولات شهر شما</span><strong>از تولیدکننده<br>تا مصرف‌کننده</strong><small>بدون واسطه</small></div><div class="floating f1">📍 سراسر ایران</div><div class="floating f2">🤝 خرید مستقیم</div></div>
-</section>
-<section class="trust-row"><div>✓ عضویت با دعوت‌نامه</div><div>✓ پرداخت مستقیم به فروشنده</div><div>✓ تحویل حضوری</div></section>
-<section class="section" id="products">
-  <div class="section-head"><div><span class="eyebrow">ویترین بازارچه</span><h2>محصولات تازه</h2></div><span class="muted" id="resultCount"></span></div>
-  <div class="filters"><label class="search">⌕ <input id="search" placeholder="نام محصول یا فروشنده را جستجو کنید"></label><select id="city"><option value="">همه شهرها</option></select><select id="category"><option value="">همه دسته‌ها</option></select></div>
-  <div class="product-grid" id="productGrid"></div>
-</section>
-<section class="how section" id="how"><div><span class="eyebrow">خرید ساده و شفاف</span><h2>از انتخاب تا تحویل</h2><p>در نسخه نخست، پرداخت مستقیم به حساب فروشنده انجام می‌شود و تحویل کالا حضوری است.</p></div>
-  <div class="steps"><article><b>۰۱</b><h3>انتخاب محصول</h3><p>محصول، شهر و قیمت را بررسی کنید.</p></article><article><b>۰۲</b><h3>ثبت سفارش</h3><p>سفارش برای فروشنده ارسال می‌شود.</p></article><article><b>۰۳</b><h3>واریز و ارسال رسید</h3><p>پس از واریز، رسید را برای فروشنده بفرستید.</p></article><article><b>۰۴</b><h3>تحویل حضوری</h3><p>پس از تأیید و هماهنگی، کالا را تحویل بگیرید.</p></article></div>
-</section>
-</main>
-<footer><b>بازارچه</b><span>نسخه نمایشی اولیه — پرداخت و سفارش واقعی فعال نیست.</span></footer>
-
-<dialog id="productDialog"><form method="dialog" id="productForm"><div class="dialog-head"><h2>ثبت محصول نمایشی</h2><button class="x" value="cancel">×</button></div>
-<label>نام محصول<input required name="title" placeholder="مثلاً عسل طبیعی"></label>
-<div class="form-row"><label>قیمت (تومان)<input required name="price" type="number" min="1"></label><label>شهر<input required name="city" placeholder="مثلاً اصفهان"></label></div>
-<div class="form-row"><label>دسته‌بندی<select name="category"><option>خوراکی</option><option>صنایع دستی</option><option>پوشاک</option><option>خانه و زندگی</option><option>سایر</option></select></label><label>نام فروشنده<input required name="seller" placeholder="نام نمایشی"></label></div>
-<label>توضیحات<textarea name="description" rows="3" placeholder="توضیح کوتاه درباره محصول"></textarea></label>
-<button class="btn primary full" type="submit">افزودن به ویترین آزمایشی</button><p class="hint">این ثبت فقط در همین مرورگر ذخیره می‌شود و برای دیگران قابل مشاهده نیست.</p></form></dialog>
-
-<dialog id="orderDialog"><form method="dialog" id="orderForm"><div class="dialog-head"><h2>درخواست خرید</h2><button class="x" value="cancel">×</button></div><div id="orderSummary"></div>
-<label>نام و نام خانوادگی<input required name="buyer" placeholder="نام خریدار"></label><label>شماره تماس<input required name="phone" inputmode="tel" placeholder="شماره تماس"></label><label>پیام به فروشنده<textarea name="note" rows="2" placeholder="برای هماهنگی تحویل حضوری"></textarea></label>
-<button class="btn primary full" type="submit">ثبت درخواست آزمایشی</button><p class="hint">هیچ پرداختی انجام نمی‌شود و اطلاعات بانکی دریافت نمی‌شود.</p></form></dialog>
-<script src="./app.js"></script>
-<script src="./auth-ui.js"></script>
-</body>
-</html>
+<header class="topbar"><a class="brand" href="#"><span class="brandmark">ب</span><span><b>بازارچه</b><small>بازار اعضا و دوستان</small></span></a><nav><a href="#products">محصولات</a><a href="#how">راهنمای خرید</a></nav><div class="top-actions"><button class="btn ghost" id="loginBtn">ورود / ثبت‌نام</button><button class="btn ghost" id="ordersBtn" hidden>سفارش‌های من</button><button class="btn primary" id="sellBtn" hidden>ثبت محصول +</button><button class="btn ghost" id="adminBtn" hidden>مدیریت اعضا</button></div></header>
+<main><section class="hero"><div class="hero-copy"><span class="eyebrow">بازار محلی، ارتباط مستقیم</span><h1>خوبی‌های هر شهر،<br><em>در دسترس همه</em></h1><p>محصولات اعضا را از شهرهای مختلف ببینید، سفارش دهید و حضوری تحویل بگیرید.</p><a class="btn light" href="#products">دیدن محصولات ←</a></div><div class="hero-art"><div class="sun"></div><div class="art-card"><span>محصولات شهر شما</span><strong>از تولیدکننده<br>تا مصرف‌کننده</strong><small>بدون واسطه</small></div><div class="floating f1">📍 سراسر ایران</div><div class="floating f2">🤝 خرید مستقیم</div></div></section>
+<section class="trust-row"><div>✓ ثبت‌نام با تأیید مدیر</div><div>✓ پرداخت مستقیم به فروشنده</div><div>✓ تحویل حضوری</div></section>
+<section class="section" id="products"><div class="section-head"><div><span class="eyebrow">ویترین بازارچه</span><h2>محصولات بازارچه</h2></div><span class="muted" id="resultCount"></span></div><div class="filters"><label class="search">⌕ <input id="search" placeholder="نام محصول یا فروشنده را جستجو کنید"></label><select id="city"><option value="">همه شهرها</option></select><select id="category"><option value="">همه دسته‌ها</option></select></div><div class="product-grid" id="productGrid"><div class="empty">در حال دریافت محصولات…</div></div></section>
+<section class="how section" id="how"><div><span class="eyebrow">خرید ساده و شفاف</span><h2>از انتخاب تا تحویل</h2><p>سفارش در بازارچه ثبت می‌شود. پرداخت خارج از سایت و مستقیم با فروشنده انجام می‌شود؛ وضعیت سفارش را در حساب خود پیگیری کنید.</p></div><div class="steps"><article><b>۰۱</b><h3>انتخاب محصول</h3><p>محصول، شهر و قیمت را بررسی کنید.</p></article><article><b>۰۲</b><h3>ثبت سفارش</h3><p>درخواست خرید برای فروشنده ثبت می‌شود.</p></article><article><b>۰۳</b><h3>هماهنگی پرداخت</h3><p>با فروشنده برای پرداخت و تأیید هماهنگ کنید.</p></article><article><b>۰۴</b><h3>تحویل حضوری</h3><p>پس از آماده‌سازی، کالا را تحویل بگیرید.</p></article></div></section></main>
+<footer><b>بازارچه</b><span>پرداخت در خارج از سایت و مستقیم به فروشنده انجام می‌شود.</span></footer>
+<dialog id="productDialog"><form id="productForm"><div class="dialog-head"><h2>ثبت محصول</h2><button class="x" type="button" data-close="productDialog">×</button></div><label>نام محصول<input required name="title" maxlength="120"></label><div class="form-row"><label>قیمت (تومان)<input required name="price_irr" type="number" min="1"></label><label>موجودی<input required name="stock" type="number" min="0" value="1"></label></div><div class="form-row"><label>شهر<input required name="city_name" maxlength="80"></label><label>کد شهر<input name="city_code" maxlength="20" placeholder="مثلاً TEH"></label></div><label>دسته‌بندی<input name="category" maxlength="80" placeholder="خوراکی، صنایع دستی و…"></label><label>توضیحات<textarea name="description" rows="3" maxlength="2000"></textarea></label><label>تصویر محصول (اختیاری)<input name="image" type="file" accept="image/jpeg,image/png,image/webp"></label><p class="hint">اگر تصویری انتخاب نکنید، تصویر کارتونی پیش‌فرض نمایش داده می‌شود.</p><div class="error" id="productError"></div><button class="btn primary full" type="submit">ثبت محصول</button></form></dialog>
+<dialog id="orderDialog"><form id="orderForm"><div class="dialog-head"><h2>ثبت سفارش</h2><button class="x" type="button" data-close="orderDialog">×</button></div><div id="orderSummary" class="order-summary"></div><label>تعداد<input name="quantity" type="number" min="1" value="1" required></label><label>پیام به فروشنده<textarea name="note" rows="3" maxlength="1000"></textarea></label><div class="error" id="orderError"></div><button class="btn primary full" type="submit">ثبت سفارش واقعی</button><p class="hint">ثبت سفارش به معنی پرداخت نیست؛ پرداخت را مستقیماً با فروشنده هماهنگ کنید.</p></form></dialog>
+<dialog id="ordersDialog"><div class="dialog-content"><div class="dialog-head"><h2>سفارش‌های من</h2><button class="x" type="button" data-close="ordersDialog">×</button></div><div id="ordersList"></div></div></dialog>
+<dialog id="adminDialog"><div class="dialog-content"><div class="dialog-head"><h2>مدیریت اعضا</h2><button class="x" type="button" data-close="adminDialog">×</button></div><div id="adminUsers"></div></div></dialog>
+<script src="./auth-ui.js"></script><script src="./app.js"></script></body></html>

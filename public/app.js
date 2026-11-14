@@ -1,57 +1,20 @@
-const demoProducts = [
- {id:1,title:"عسل طبیعی کوهستان",category:"خوراکی",price:480000,city:"ارومیه",seller:"مریم احمدی",emoji:"🍯",description:"عسل طبیعی برداشت محدود"},
- {id:2,title:"ظروف سفالی دست‌ساز",category:"صنایع دستی",price:350000,city:"لالجین",seller:"کارگاه نقش خاک",emoji:"🏺",description:"ساخته‌شده با دست"},
- {id:3,title:"زعفران ممتاز",category:"خوراکی",price:920000,city:"قائن",seller:"رضا نادری",emoji:"🌺",description:"زعفران سرگل بسته‌بندی‌شده"},
- {id:4,title:"کیف چرمی دست‌دوز",category:"پوشاک",price:1250000,city:"تبریز",seller:"الهام کریمی",emoji:"👜",description:"چرم طبیعی و دوخت دستی"},
- {id:5,title:"خرمای خاصویی",category:"خوراکی",price:210000,city:"بوشهر",seller:"محمد دشتی",emoji:"🌴",description:"محصول تازه منطقه"},
- {id:6,title:"گلیم سنتی",category:"صنایع دستی",price:1850000,city:"سنندج",seller:"خانه گلیم",emoji:"🧶",description:"بافت سنتی و رنگ طبیعی"},
- {id:7,title:"ادویه محلی",category:"خوراکی",price:165000,city:"بندرعباس",seller:"فاطمه دریایی",emoji:"🫙",description:"ترکیب ادویه جنوبی"},
- {id:8,title:"محصولات چوبی",category:"خانه و زندگی",price:690000,city:"رشت",seller:"چوبینه",emoji:"🪵",description:"ساخته‌شده از چوب طبیعی"}
-];
-const key="bazaarak_demo_products";
-let products=[...demoProducts,...JSON.parse(localStorage.getItem(key)||"[]")];
-const $=s=>document.querySelector(s);
-const money=n=>new Intl.NumberFormat("fa-IR").format(n)+" تومان";
-function initFilters(){
- const cities=[...new Set(products.map(p=>p.city))].sort();
- const cats=[...new Set(products.map(p=>p.category))].sort();
- $("#city").innerHTML='<option value="">همه شهرها</option>'+cities.map(x=>`<option>${x}</option>`).join("");
- $("#category").innerHTML='<option value="">همه دسته‌ها</option>'+cats.map(x=>`<option>${x}</option>`).join("");
-}
-function render(){
- const q=$("#search").value.trim().toLowerCase(),city=$("#city").value,cat=$("#category").value;
- const filtered=products.filter(p=>(!q||[p.title,p.seller,p.city].some(x=>x.toLowerCase().includes(q)))&&(!city||p.city===city)&&(!cat||p.category===cat));
- $("#resultCount").textContent=new Intl.NumberFormat("fa-IR").format(filtered.length)+" محصول";
- $("#productGrid").innerHTML=filtered.length?filtered.map(p=>`<article class="product"><div class="product-art">${p.emoji||"📦"}</div><div class="product-body"><span class="tag">${p.category}</span><h3>${escapeHtml(p.title)}</h3><div class="seller">فروشنده: ${escapeHtml(p.seller)}</div><div class="location">📍 ${escapeHtml(p.city)} · تحویل حضوری</div><div class="price-row"><div class="price">${money(p.price)}</div><button class="buy" data-buy="${p.id}">درخواست خرید</button></div></div></article>`).join(""):'<div class="empty">محصولی با این مشخصات پیدا نشد.</div>';
-}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-$("#search").addEventListener("input",render);$("#city").addEventListener("change",render);$("#category").addEventListener("change",render);
-$("#sellBtn").onclick=()=>$("#productDialog").showModal();
-$("#loginBtn").onclick=()=>alert("ورود و ثبت‌نام دعوت‌محور در مرحله اتصال به API پیاده‌سازی می‌شود.");
-$("#productGrid").addEventListener("click",e=>{
- const id=Number(e.target.dataset.buy);if(!id)return;
- const p=products.find(x=>x.id===id);$("#orderSummary").innerHTML=`<div class="order-summary"><b>${escapeHtml(p.title)}</b><p>${escapeHtml(p.city)} · ${money(p.price)}</p><small>فروشنده: ${escapeHtml(p.seller)}</small></div>`;
- $("#orderForm").dataset.productId=id;$("#orderDialog").showModal();
-});
-$("#productForm").addEventListener("submit",e=>{
- e.preventDefault();const d=new FormData(e.target);
- const title=String(d.get("title")||"").trim();
- const city=String(d.get("city")||"").trim();
- const seller=String(d.get("seller")||"").trim();
- const category=String(d.get("category")||"خوراکی").trim();
- const description=String(d.get("description")||"").trim();
- const price=Math.round(Number(d.get("price")));
- if(!title||!city||!seller||price<=0||Number.isNaN(price)){
-  alert("لطفاً تمام اطلاعات محصول را به درستی وارد کنید (قیمت باید بزرگتر از صفر باشد).");
-  return;
- }
- const p={id:Date.now(),title,price,city,category,seller,description,emoji:"📦"};
- products.push(p);const demoIds=new Set(demoProducts.map(d=>d.id));
- const custom=products.filter(x=>!demoIds.has(x.id));
- localStorage.setItem(key,JSON.stringify(custom));initFilters();render();e.target.reset();$("#productDialog").close();
-});
-$("#orderForm").addEventListener("submit",e=>{
- e.preventDefault();alert("درخواست خرید به‌صورت نمایشی ثبت شد. در نسخه عملیاتی، این درخواست به فروشنده ارسال می‌شود. هیچ پولی واریز نکنید.");
- e.target.reset();$("#orderDialog").close();
-});
-initFilters();render();
+(() => {
+ const $=s=>document.querySelector(s),api=window.Bazaarak.api,state=window.Bazaarak.state;let products=[],selected=null;
+ const money=n=>new Intl.NumberFormat("fa-IR").format(n)+" تومان";
+ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ const fallback={خوراکی:"🍚", "صنایع دستی":"🏺",پوشاک:"👜", "خانه و زندگی":"🪴",سایر:"📦"};
+ async function loadProducts(){try{const r=await api("/api/products");products=r.products||[];filters();render();}catch(e){$("#productGrid").innerHTML=`<div class="empty">${esc(e.message)}</div>`;}}
+ function filters(){const cities=[...new Set(products.map(p=>p.city_name))].sort(),cats=[...new Set(products.map(p=>p.category||"سایر"))].sort();const c=$("#city").value,k=$("#category").value;$("#city").innerHTML='<option value="">همه شهرها</option>'+cities.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");$("#category").innerHTML='<option value="">همه دسته‌ها</option>'+cats.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");$("#city").value=c;$("#category").value=k;}
+ function render(){const q=$("#search").value.trim().toLocaleLowerCase(),city=$("#city").value,cat=$("#category").value;const list=products.filter(p=>(!q||[p.title,p.seller_name,p.city_name].some(v=>String(v||"").toLocaleLowerCase().includes(q)))&&(!city||p.city_name===city)&&(!cat||(p.category||"سایر")===cat));$("#resultCount").textContent=new Intl.NumberFormat("fa-IR").format(list.length)+" محصول";$("#productGrid").innerHTML=list.length?list.map(p=>`<article class="product"><div class="product-art">${p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.title)}" loading="lazy" onerror="this.remove();this.parentElement.textContent='${fallback[p.category]||"📦"}'">`:`<span>${fallback[p.category]||"📦"}</span>`}</div><div class="product-body"><span class="tag">${esc(p.category||"سایر")}</span><h3>${esc(p.title)}</h3><div class="seller">فروشنده: ${esc(p.seller_name)}</div><div class="location">📍 ${esc(p.city_name)} · موجودی ${new Intl.NumberFormat("fa-IR").format(p.stock)}</div><div class="price-row"><div class="price">${money(p.price_irr)}</div><button class="buy" data-buy="${esc(p.id)}">سفارش</button></div></div></article>`).join(""):'<div class="empty">هنوز محصولی ثبت نشده است. به‌زودی محصولات بازارچه اضافه می‌شوند.</div>';}
+ ["input","change"].forEach(ev=>{$("#search").addEventListener(ev,render);$("#city").addEventListener(ev,render);$("#category").addEventListener(ev,render);});
+ $("#productGrid").addEventListener("click",e=>{const id=e.target.closest("[data-buy]")?.dataset.buy;if(!id)return;if(!state.user){$("#loginBtn").click();return;}selected=products.find(p=>p.id===id);if(!selected)return;$("#orderSummary").innerHTML=`<b>${esc(selected.title)}</b><p>${money(selected.price_irr)} · ${esc(selected.city_name)}</p><small>فروشنده: ${esc(selected.seller_name)} | موجودی: ${selected.stock}</small>`;$("#orderError").textContent="";$("#orderDialog").showModal();});
+ $("#sellBtn").onclick=()=>{$("#productError").textContent="";$("#productDialog").showModal();};
+ $("#productForm").onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,d=new FormData(form),file=d.get("image"),body={title:d.get("title"),price_irr:Number(d.get("price_irr")),stock:Number(d.get("stock")),city_name:d.get("city_name"),city_code:d.get("city_code"),category:d.get("category"),description:d.get("description")};const err=$("#productError");err.textContent="";try{const r=await api("/api/products",{method:"POST",body:JSON.stringify(body)});if(file&&file.size){const fd=new FormData();fd.set("file",file);fd.set("product_id",r.id);await api("/api/uploads/product-image",{method:"POST",body:fd});}form.reset();$("#productDialog").close();await loadProducts();alert("محصول با موفقیت در ویترین ثبت شد.");}catch(x){err.textContent=x.message;}};
+ $("#orderForm").onsubmit=async e=>{e.preventDefault();if(!selected)return;const d=new FormData(e.currentTarget);$("#orderError").textContent="";try{const r=await api("/api/orders",{method:"POST",body:JSON.stringify({product_id:selected.id,quantity:Number(d.get("quantity")),note:d.get("note")})});e.currentTarget.reset();$("#orderDialog").close();await loadProducts();alert(`سفارش ${r.order.order_code} ثبت شد. برای پرداخت و تحویل با فروشنده هماهنگ کنید.`);}catch(x){$("#orderError").textContent=x.message;}};
+ $("#ordersBtn").onclick=showOrders;async function showOrders(){try{const r=await api("/api/orders"),items=r.orders||[];$("#ordersList").innerHTML=items.length?items.map(o=>{const seller=state.user.id===o.seller_id,actions=seller?({awaiting_payment:[["payment_confirmed","تأیید پرداخت"],["cancelled","لغو"]],payment_confirmed:[["ready_for_pickup","آماده تحویل"]],ready_for_pickup:[["completed","تکمیل سفارش"]]}[o.status]||[]):[];return `<article class="order-item"><b>سفارش ${esc(o.order_code)}</b><p>${seller?"خریدار":"فروشنده"}: ${esc(seller?o.buyer_name:o.seller_name)}</p><p>مبلغ: ${money(o.subtotal_irr)} | وضعیت: ${statusName(o.status)}</p>${actions.map(([s,label])=>`<button class="buy" data-status="${s}" data-id="${o.id}">${label}</button>`).join(" ")}</article>`;}).join(""):'<div class="empty">هنوز سفارشی ندارید.</div>';$("#ordersDialog").showModal();}catch(e){alert(e.message);}}
+ function statusName(s){return ({awaiting_payment:"در انتظار پرداخت",receipt_submitted:"رسید ارسال شده",payment_confirmed:"پرداخت تأیید شده",ready_for_pickup:"آماده تحویل",completed:"تکمیل شده",cancelled:"لغو شده",disputed:"دارای اختلاف"})[s]||s;}
+ $("#ordersList").addEventListener("click",async e=>{const b=e.target.closest("[data-status]");if(!b)return;try{await api(`/api/orders/${b.dataset.id}`,{method:"PATCH",body:JSON.stringify({status:b.dataset.status})});await showOrders();}catch(x){alert(x.message);}});
+ $("#adminBtn").onclick=showAdmin;async function showAdmin(){try{const [pending,active]=await Promise.all([api("/api/admin/users?status=pending"),api("/api/admin/users?status=active")]);const p=pending.users||[],a=(active.users||[]).filter(u=>u.role!=="admin");const pendingHtml=p.length?p.map(u=>`<article class="order-item"><b>${esc(u.display_name)}</b><p>${esc(u.phone)} · ${esc(u.city_name)} · مشتری</p><button class="buy" data-approve="${u.id}">تأیید عضویت</button></article>`).join(""):'<p class="muted">درخواست عضویت در انتظار وجود ندارد.</p>';const activeHtml=a.map(u=>`<article class="order-item"><b>${esc(u.display_name)}</b><p>${esc(u.phone)} · ${esc(u.city_name)} · نقش فعلی: ${u.role==="seller"?"فروشنده":"مشتری"}</p><button class="buy" data-role-id="${u.id}" data-role="${u.role==="seller"?"buyer":"seller"}">${u.role==="seller"?"تبدیل به مشتری":"اعطای دسترسی فروشندگی"}</button><button class="buy" data-block="${u.id}">مسدودسازی</button></article>`).join("");$("#adminUsers").innerHTML=`<h3>درخواست‌های عضویت</h3>${pendingHtml}<h3>اعضای فعال</h3>${activeHtml||'<p class="muted">عضو فعالی وجود ندارد.</p>'}`;$("#adminDialog").showModal();}catch(e){alert(e.message);}}
+ $("#adminUsers").addEventListener("click",async e=>{const approve=e.target.closest("[data-approve]"),role=e.target.closest("[data-role-id]"),block=e.target.closest("[data-block]");try{if(approve)await api(`/api/admin/users/${approve.dataset.approve}/approve`,{method:"POST",body:"{}"});else if(role)await api(`/api/admin/users/${role.dataset.roleId}/role`,{method:"POST",body:JSON.stringify({role:role.dataset.role})});else if(block&&confirm("این حساب مسدود شود؟"))await api(`/api/admin/users/${block.dataset.block}/block`,{method:"POST",body:"{}"});else return;await showAdmin();}catch(x){alert(x.message);}});
+ document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>$("#"+b.dataset.close).close());loadProducts();
+})();
